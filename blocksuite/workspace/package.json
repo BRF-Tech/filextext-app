@@ -1,0 +1,22 @@
+{
+  "name": "fxtxt-bs-root",
+  "private": true,
+  "packageManager": "yarn@4.13.0",
+  "workspaces": [
+    "affine-src/blocksuite/framework/*",
+    "affine-src/blocksuite/affine/all",
+    "affine-src/blocksuite/affine/components",
+    "affine-src/blocksuite/affine/data-view",
+    "affine-src/blocksuite/affine/ext-loader",
+    "affine-src/blocksuite/affine/foundation",
+    "affine-src/blocksuite/affine/model",
+    "affine-src/blocksuite/affine/rich-text",
+    "affine-src/blocksuite/affine/shared",
+    "affine-src/blocksuite/affine/blocks/*",
+    "affine-src/blocksuite/affine/gfx/*",
+    "affine-src/blocksuite/affine/widgets/*",
+    "affine-src/blocksuite/affine/fragments/*",
+    "affine-src/blocksuite/affine/inlines/*",
+    "editor"
+  ]
+}

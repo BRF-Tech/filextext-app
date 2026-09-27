@@ -1,0 +1,80 @@
+name: Release
+
+# A tag `vX.Y.Z` publishes that version. Before tagging, on your machine:
+#
+#   1. bump "version" in filex-app.json and package.json
+#   2. npm run build && node scripts/pack-ui.mjs --stamp
+#      (builds ui.zip and writes its sha256 into filex-app.json)
+#   3. commit, tag vX.Y.Z, push the tag
+#
+# Here the interface is built again from the tag and must hash to what
+# filex-app.json says — filex refuses a package whose sha256 differs (the
+# build is reproducible: same sources, same lockfile, same bytes on any OS).
+# ui.zip is attached to the GitHub release, which is where the manifest's
+# ui.bundle.url points: an administrator installs the app with the repository
+# and the tag (Admin → Plugins → Apps → Install an app → GitHub repository).
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: The tag is the manifest's version
+        run: |
+          want="${GITHUB_REF_NAME#v}"
+          for f in filex-app.json package.json; do
+            have="$(jq -r .version "$f")"
+            if [ "$want" != "$have" ]; then
+              echo "tag $GITHUB_REF_NAME, but $f says version $have" >&2
+              exit 1
+            fi
+          done
+
+      - name: The bundle address is this repository's release
+        run: |
+          want="https://github.com/${GITHUB_REPOSITORY}/releases/download/{tag}/ui.zip"
+          have="$(jq -r .ui.bundle.url filex-app.json)"
+          if [ "${want,,}" != "${have,,}" ]; then
+            echo "ui.bundle.url is $have; filex would download from there, not from this release ($want)" >&2
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - name: Unit tests
+        run: npx vitest run
+
+      - name: Build ui.zip
+        run: npm run build
+
+      - name: The committed sha256 is this build's
+        run: |
+          built="$(cut -d' ' -f1 release/ui.zip.sha256)"
+          committed="$(jq -r .ui.bundle.sha256 filex-app.json)"
+          echo "built:     $built"
+          echo "committed: $committed"
+          if [ "$built" != "$committed" ]; then
+            echo "filex-app.json does not carry this build's hash: run 'npm run build && node scripts/pack-ui.mjs --stamp', commit, tag again" >&2
+            exit 1
+          fi
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release/ui.zip
+            release/ui.zip.sha256
+            filex-app.json

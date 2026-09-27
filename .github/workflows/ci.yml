@@ -1,0 +1,55 @@
+name: CI
+
+# Every push to main and every pull request: types, the unit tests (format,
+# crypto and its fixed vectors, tree, payload, texts), the build, and the
+# checks a release relies on. The interface package is kept for a week, so a
+# reviewer can install exactly what a pull request builds (Admin → Plugins →
+# Apps → Install an app → Upload files: filex-app.json + ui.zip).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Types
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npx vitest run
+
+      - name: The Python reference agrees with the committed test vectors
+        run: |
+          pip install --quiet cryptography
+          python tools/fxtxt_ref.py vectors /tmp/vectors.json
+          diff -u tests/vectors/container-v1.json /tmp/vectors.json
+
+      - name: Build ui.zip
+        run: npm run build
+
+      - name: THIRD_PARTY_LICENSES.txt is current
+        run: git diff --exit-code -- THIRD_PARTY_LICENSES.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: filextext-ui
+          path: |
+            release/ui.zip
+            release/ui.zip.sha256
+            filex-app.json
+          retention-days: 7

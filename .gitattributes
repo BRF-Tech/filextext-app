@@ -1,0 +1,7 @@
+# LF everywhere, on every OS: the shell scripts run in WSL/Linux, and the
+# test vectors and bundles must be byte-identical wherever they are checked out.
+* text=auto eol=lf
+*.png binary
+*.zip binary
+# Built artifacts: committed so the app builds without the BlockSuite toolchain.
+vendor/** -diff linguist-vendored

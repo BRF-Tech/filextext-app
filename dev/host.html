@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fxtxt fake host</title>
+<style>
+  :root { color-scheme: light dark; font: 13px/1.4 system-ui, sans-serif; }
+  body { margin: 0; display: flex; flex-direction: column; height: 100vh; }
+  header { display: flex; gap: 6px; align-items: center; padding: 6px 10px; border-bottom: 1px solid #8884; flex-wrap: wrap; }
+  header .grow { flex: 1; }
+  header code { font-size: 12px; }
+  #frame-wrap { flex: 1; min-height: 0; }
+  iframe { border: 0; width: 100%; height: 100%; display: block; }
+  #toast { position: fixed; right: 12px; bottom: 12px; padding: 8px 12px; border-radius: 6px; background: #333; color: #fff; display: none; max-width: 420px; }
+  #toast[data-tone="error"] { background: #b42318; }
+  #toast[data-tone="success"] { background: #1f7a3a; }
+  #toast[data-tone="warning"] { background: #8a5a00; }
+</style>
+</head>
+<body>
+<header>
+  <strong>fake filex host</strong>
+  <button id="b-new" type="button">New .fxtxt</button>
+  <button id="b-reopen" type="button">Close &amp; reopen</button>
+  <button id="b-save" type="button">Save (Ctrl+S)</button>
+  <label>Theme <select id="s-theme"><option>light</option><option>dark</option></select></label>
+  <label>Lang <select id="s-lang"><option>en</option><option>tr</option></select></label>
+  <span class="grow"></span>
+  <code id="status">no file</code>
+</header>
+<div id="frame-wrap"></div>
+<div id="toast"></div>
+<script>
+// A stand-in for filex's AppFrame (design report §3.3):
+//  - sandbox="allow-scripts" is set BEFORE src, no `allow`, no-referrer;
+//  - the only accepted hello is the one whose ev.source is our frame
+//    (ev.origin is always "null" for a sandboxed frame, so it says nothing);
+//  - one MessagePort per frame load; everything after the hello goes
+//    through it as {id, method, params} -> {id, result} | {id, error}.
+const APP_BASE = '__APP_BASE__';
+const PROBE_BASE = '__PROBE_BASE__';
+const params = new URLSearchParams(location.search);
+const PROBE = params.has('probe');
+
+const state = {
+  name: params.get('name') || 'notes.fxtxt',
+  bytes: null,            // Uint8Array | null  (null = a brand-new, empty file)
+  versions: [],           // every save, newest last
+  dirty: false,
+  title: '',
+  toasts: [],
+  downloads: [],
+  theme: params.get('theme') || 'light',
+  locale: params.get('lang') || 'en',
+  loads: 0,
+  port: null,
+  probe: null,
+  rejected: [],
+};
+window.fxhost = state;
+
+const $ = (id) => document.getElementById(id);
+$('s-theme').value = state.theme;
+$('s-lang').value = state.locale;
+
+function status() {
+  const b = state.bytes;
+  const magic = b ? new TextDecoder().decode(b.slice(0, 8)) : '-';
+  $('status').textContent = `${state.name} · ${b ? b.byteLength + ' B, magic ' + magic : 'new (empty)'} · v${state.versions.length}${state.dirty ? ' · unsaved' : ''}`;
+}
+
+let frame = null;
+function load() {
+  if (state.port) { state.port.close(); state.port = null; }
+  $('frame-wrap').innerHTML = '';
+  frame = document.createElement('iframe');
+  frame.setAttribute('sandbox', 'allow-scripts');
+  frame.setAttribute('referrerpolicy', 'no-referrer');
+  frame.setAttribute('title', 'app');
+  frame.src = (PROBE ? PROBE_BASE : APP_BASE) + 'index.html';
+  $('frame-wrap').append(frame);
+  state.loads++;
+  status();
+}
+
+function send(event, data) {
+  if (state.port) state.port.postMessage({ event, data });
+}
+
+let hseq = 0;
+const hostWaiters = new Map();
+state.clipboard = null;
+state.saveResults = [];
+state.readOnly = params.has('readonly');
+
+function session() {
+  return {
+    v: 1,
+    app: { name: 'filextext', version: '0.1.0' },
+    view: { id: 'editor', placement: 'viewer' },
+    locale: state.locale,
+    dir: 'ltr',
+    theme: { mode: state.theme, tokens: {} },
+    user: { name: 'Dev User' },
+    files: [{
+      index: 0,
+      name: state.name,
+      ext: 'fxtxt',
+      size: state.bytes ? state.bytes.byteLength : 0,
+      mime: 'application/octet-stream',
+      readOnly: state.readOnly,
+    }],
+    grants: [...(state.readOnly ? ['files:read', 'ui'] : ['files:read', 'files:write', 'ui']), ...(params.has('nodl') ? [] : ['ui:download'])],
+  };
+}
+
+function toBytes(data) {
+  if (typeof data === 'string') return new TextEncoder().encode(data);
+  return new Uint8Array(data);
+}
+
+const methods = {
+  'session.get': () => session(),
+  'file.read': (p) => {
+    if ((p.index ?? 0) !== 0) throw Object.assign(new Error('no such file'), { code: 'not_found' });
+    const bytes = state.bytes ? state.bytes.slice() : new Uint8Array();
+    const base = { name: state.name, size: bytes.byteLength, mime: 'application/octet-stream' };
+    if (p.as === 'text') return { ...base, text: new TextDecoder().decode(bytes) };
+    if (p.as === 'stream') {
+      const stream = new ReadableStream({ start(c) { if (bytes.byteLength) c.enqueue(bytes); c.close(); } });
+      return { ...base, stream, transfer: [stream] };
+    }
+    const buf = bytes.buffer;
+    return { ...base, bytes: buf, transfer: [buf] };
+  },
+  'file.save': async (p) => {
+    if (state.readOnly) throw Object.assign(new Error('read-only'), { code: 'read_only' });
+    let bytes;
+    if (p.data instanceof ReadableStream) {
+      const parts = []; const r = p.data.getReader();
+      for (;;) { const { value, done } = await r.read(); if (done) break; parts.push(value); }
+      bytes = new Uint8Array(await new Blob(parts).arrayBuffer());
+    } else bytes = toBytes(p.data);
+    state.bytes = bytes;
+    state.versions.push(bytes);
+    status();
+    return { saved: true, size: bytes.byteLength };
+  },
+  'file.saveAs': () => { throw Object.assign(new Error('not in the fake host'), { code: 'unavailable' }); },
+  'ui.dirty': (p) => { state.dirty = !!p.dirty; status(); return null; },
+  'ui.title': (p) => { state.title = String(p.text || ''); document.title = state.title || 'fxtxt fake host'; return null; },
+  'ui.toast': (p) => {
+    state.toasts.push(p);
+    const t = $('toast');
+    t.textContent = p.text;
+    t.dataset.tone = p.tone || 'info';
+    t.style.display = 'block';
+    clearTimeout(t._h);
+    t._h = setTimeout(() => (t.style.display = 'none'), 3000);
+    return null;
+  },
+  'ui.confirm': (p) => (params.has('autoconfirm') ? true : window.confirm(p.text)),
+  'ui.close': () => { state.closed = (state.closed || 0) + 1; return null; },
+  'ui.download': (p) => {
+    // The plaintext export goes to the person's disk, never to a server.
+    const bytes = toBytes(p.data);
+    state.downloads.push({ name: p.name, mime: p.mime, bytes, text: new TextDecoder().decode(bytes) });
+    if (!params.has('nodownload')) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([bytes], { type: p.mime || 'application/octet-stream' }));
+      a.download = p.name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    }
+    return { saved: true, size: bytes.byteLength };
+  },
+  'clipboard.write': async (p) => {
+    state.clipboard = String(p.text);
+    try { await navigator.clipboard.writeText(state.clipboard); } catch {}
+    return null;
+  },
+};
+
+function hostRequest(request, params) {
+  if (!state.port) return Promise.reject(new Error('no port'));
+  const hid = ++hseq;
+  return new Promise((resolve, reject) => {
+    hostWaiters.set(hid, { resolve, reject });
+    state.port.postMessage({ hid, request, params });
+  });
+}
+
+window.addEventListener('message', (ev) => {
+  if (!frame || ev.source !== frame.contentWindow) {
+    if (ev.data && ev.data.type === 'filex:hello') state.rejected.push('hello from a foreign window');
+    return;
+  }
+  const d = ev.data;
+  if (d && d.type === 'probe:done') { state.probe = d.report; return; }
+  if (!d || d.type !== 'filex:hello' || d.v !== 1) return;
+  if (state.port) { state.rejected.push('second hello'); return; }
+  const ch = new MessageChannel();
+  state.port = ch.port1;
+  ch.port1.onmessage = async (e) => {
+    const m = e.data || {};
+    if (typeof m.hid === 'number') {
+      const w = hostWaiters.get(m.hid);
+      if (w) { hostWaiters.delete(m.hid); m.error ? w.reject(m.error) : w.resolve(m.result); }
+      return;
+    }
+    if (typeof m.id !== 'number' || typeof m.method !== 'string') return;
+    const fn = methods[m.method];
+    if (!fn) { ch.port1.postMessage({ id: m.id, error: { code: 'unknown_method', message: m.method } }); return; }
+    try {
+      const r = await fn(m.params || {});
+      const transfer = (r && r.transfer) || [];
+      if (r && r.transfer) delete r.transfer;
+      ch.port1.postMessage({ id: m.id, result: r }, transfer);
+    } catch (err) {
+      ch.port1.postMessage({ id: m.id, error: { code: (err && err.code) || 'failed', message: String(err && err.message || err) } });
+    }
+  };
+  frame.contentWindow.postMessage({ type: 'filex:port', v: 1 }, '*', [ch.port2]);
+});
+
+$('b-new').onclick = () => { state.bytes = null; state.versions = []; state.dirty = false; load(); };
+$('b-reopen').onclick = () => load();
+async function requestSave() {
+  try { const r = await hostRequest('save'); state.saveResults.push({ ok: true, r }); }
+  catch (err) { state.saveResults.push({ ok: false, err }); }
+}
+$('b-save').onclick = () => void requestSave();
+$('s-theme').onchange = (e) => { state.theme = e.target.value; document.documentElement.style.colorScheme = state.theme; send('theme', { mode: state.theme, tokens: {} }); };
+$('s-lang').onchange = (e) => { state.locale = e.target.value; send('locale', { locale: state.locale, dir: 'ltr' }); };
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); void requestSave(); }
+});
+window.addEventListener('beforeunload', (e) => { if (state.dirty) { e.preventDefault(); } });
+document.documentElement.style.colorScheme = state.theme;
+
+state.api = {
+  newFile() { $('b-new').click(); },
+  reopen() { load(); },
+  requestSave,
+  requestClose() { send('close.request', {}); },
+  fileChanged() { send('file.changed', {}); },
+  setTheme(t) { $('s-theme').value = t; $('s-theme').dispatchEvent(new Event('change')); },
+  setLocale(l) { $('s-lang').value = l; $('s-lang').dispatchEvent(new Event('change')); },
+  setBytes(u8) { state.bytes = u8 ? new Uint8Array(u8) : null; },
+};
+load();
+</script>
+</body>
+</html>
