@@ -24,6 +24,22 @@
     "files:write": {
       "en": "To save the workspace back into that same file, encrypted again in your browser before it is sent.",
       "tr": "Çalışma alanını aynı dosyaya geri kaydetmek için; gönderilmeden önce tarayıcınızda yeniden şifrelenir."
+    },
+    "ui": {
+      "en": "The editor and the encryption run in your browser, in filex's sandboxed frame. None of this app runs on the server.",
+      "tr": "Düzenleyici ve şifreleme tarayıcınızda, filex'in yalıtılmış çerçevesinde çalışır. Bu uygulamanın hiçbir parçası sunucuda çalışmaz."
+    },
+    "ui:download": {
+      "en": "Only for Download in a page's export dialog: when you click it, that page goes to your computer, in the clear.",
+      "tr": "Yalnızca bir sayfanın dışa aktarma penceresindeki İndir düğmesi için: tıkladığınızda o sayfa düz metin olarak bilgisayarınıza iner."
+    },
+    "ui-viewer:.fxtxt": {
+      "en": "A .fxtxt file is an encrypted workspace: filex's own preview cannot read it.",
+      "tr": "Bir .fxtxt dosyası şifreli bir çalışma alanıdır; filex'in kendi önizlemesi onu okuyamaz."
+    },
+    "ui-new:.fxtxt": {
+      "en": "So that New document can start a new encrypted workspace.",
+      "tr": "Yeni belge menüsünden yeni bir şifreli çalışma alanı başlatılabilsin diye."
     }
   },
   "languages": [
