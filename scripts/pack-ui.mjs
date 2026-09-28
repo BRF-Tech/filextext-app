@@ -14,7 +14,10 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const dist = join(root, 'dist');
 const files = {};
 // A fixed timestamp: the same dist/ always gives the same zip (and hash).
-const mtime = new Date('2026-01-01T00:00:00Z');
+// fflate writes the zip's DOS time from the LOCAL clock (getHours() …), so a
+// UTC instant lands on different hours in different time zones. A local-time
+// Date has the same fields everywhere: 2026-01-01 00:00:00 in every zone.
+const mtime = new Date(2026, 0, 1, 0, 0, 0);
 const add = (name, bytes) => {
   files[name] = [new Uint8Array(bytes), { mtime, level: 9 }];
 };

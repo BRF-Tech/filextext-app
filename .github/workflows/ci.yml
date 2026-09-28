@@ -45,6 +45,20 @@ jobs:
       - name: THIRD_PARTY_LICENSES.txt is current
         run: git diff --exit-code -- THIRD_PARTY_LICENSES.txt
 
+      # The check the Release workflow makes on a tag, made on every push: a
+      # hash that only matches on the author's machine is found here, not
+      # after the tag is out.
+      - name: The committed sha256 is this build's
+        run: |
+          built="$(cut -d' ' -f1 release/ui.zip.sha256)"
+          committed="$(jq -r .ui.bundle.sha256 filex-app.json)"
+          echo "built:     $built"
+          echo "committed: $committed"
+          if [ "$built" != "$committed" ]; then
+            echo "filex-app.json does not carry this build's hash: run 'npm run build && node scripts/pack-ui.mjs --stamp' and commit" >&2
+            exit 1
+          fi
+
       - uses: actions/upload-artifact@v4
         with:
           name: filextext-ui
