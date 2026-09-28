@@ -117,7 +117,7 @@ It needs **filex 0.48.0 or later** — the version that runs app interfaces
 
 1. **Admin → Plugins → Apps → Install an app → GitHub repository.**
 2. **Repository:** `BRF-Tech/filextext-app`. **Ref:** the tag of a release
-   (`v0.1.0`) — the repository's *Releases* page lists them. Give the tag,
+   (`v0.1.1`) — the repository's *Releases* page lists them. Give the tag,
    not a branch: the interface package is a release asset.
 3. filex fetches `filex-app.json` at that tag, downloads `ui.zip` from the
    release and refuses it unless its SHA-256 matches the manifest's. Read
@@ -255,7 +255,7 @@ byte, on any OS (checked on Linux and Windows). To check an installed
 version, build its tag and compare:
 
 ```bash
-git checkout v0.1.0 && npm ci && npm run build
+git checkout v0.1.1 && npm ci && npm run build
 cat release/ui.zip.sha256          # = ui.bundle.sha256 in filex-app.json = the hash filex's review shows
 ```
 

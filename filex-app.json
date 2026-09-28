@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
   "name": "filextext",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "label": {
     "en": "filextext",
     "tr": "filextext"

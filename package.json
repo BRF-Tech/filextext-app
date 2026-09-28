@@ -1,6 +1,6 @@
 {
   "name": "filextext-app",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "An end-to-end encrypted text workspace (.fxtxt) for filex, edited with AFFiNE's BlockSuite editor.",
   "license": "MIT",
