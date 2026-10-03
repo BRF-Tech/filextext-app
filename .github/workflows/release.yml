@@ -3,9 +3,11 @@ name: Release
 # A tag `vX.Y.Z` publishes that version. Before tagging, on your machine:
 #
 #   1. bump "version" in filex-app.json and package.json
-#   2. npm run build && node scripts/pack-ui.mjs --stamp
+#   2. write the version's section in CHANGELOG.md (`## X.Y.Z - date`): it
+#      becomes the release's notes, which filex shows on "Review update"
+#   3. npm run build && node scripts/pack-ui.mjs --stamp
 #      (builds ui.zip and writes its sha256 into filex-app.json)
-#   3. commit, tag vX.Y.Z, push the tag
+#   4. commit, tag vX.Y.Z, push the tag
 #
 # Here the interface is built again from the tag and must hash to what
 # filex-app.json says — filex refuses a package whose sha256 differs (the
@@ -43,6 +45,9 @@ jobs:
             fi
           done
 
+      - name: CHANGELOG.md says what this version changes
+        run: node scripts/release-body.mjs "${GITHUB_REF_NAME#v}" > /dev/null
+
       - name: The bundle address is this repository's release
         run: |
           want="https://github.com/${GITHUB_REPOSITORY}/releases/download/{tag}/ui.zip"
@@ -71,8 +76,15 @@ jobs:
             exit 1
           fi
 
+      # The release's body is this version's CHANGELOG.md section: it is what
+      # filex shows an administrator under "Release notes" when it offers the
+      # update. No section, no release (scripts/release-body.mjs).
+      - name: Release notes from CHANGELOG.md
+        run: node scripts/release-body.mjs "${GITHUB_REF_NAME#v}" > release/release-notes.md
+
       - uses: softprops/action-gh-release@v2
         with:
+          body_path: release/release-notes.md
           generate_release_notes: true
           files: |
             release/ui.zip

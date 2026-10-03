@@ -382,7 +382,7 @@ export class WorkspaceUI {
     };
     walk(nodes);
     modal({
-      title: `${t('moveTo')} — ${n.name || t('untitled')}`,
+      title: `${t('moveTo')} - ${n.name || t('untitled')}`,
       testid: 'move-dialog',
       body: [h('div', { class: 'dest-list' }, ...options)],
       actions: [
@@ -537,7 +537,7 @@ export class WorkspaceUI {
     this.view?.open(id);
     this.renderTabs();
     this.renderTree();
-    this.cb.title(`${this.fileName} — ${this.pageTitle(id)}`);
+    this.cb.title(`${this.fileName} - ${this.pageTitle(id)}`);
   }
 
   private closeTab(id: string, reopen = true) {
@@ -590,7 +590,7 @@ export class WorkspaceUI {
       return tab;
     });
     this.els.tabs.replaceChildren(...items);
-    if (this.active) this.cb.title(`${this.fileName} — ${this.pageTitle(this.active)}`);
+    if (this.active) this.cb.title(`${this.fileName} - ${this.pageTitle(this.active)}`);
   }
 
   // ── status & menus ────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 # filextext
 
 An **end-to-end encrypted text workspace** for [filex](https://github.com/BRF-Tech/filex),
-the self-hosted file manager — in a single `.fxtxt` file. Pages and folders
+the self-hosted file manager - in a single `.fxtxt` file. Pages and folders
 on the left, tabs on top, and AFFiNE's editor,
 [BlockSuite](https://github.com/toeverything/AFFiNE/tree/v0.27.4/blocksuite),
 in the middle: headings, lists, to-dos, code with highlighting, tables,
@@ -36,7 +36,7 @@ sandboxed frame. The app talks to filex only through the bridge SDK
 | the language and the theme | "there are unsaved changes", the frame's title, short notices |
 | | on your click only: a page you export (Download) or copy |
 
-The editor keeps the workspace in memory as Yjs documents — BlockSuite's own
+The editor keeps the workspace in memory as Yjs documents - BlockSuite's own
 page collection plus a folder tree in the shape of AFFiNE's "Organize".
 Saving serialises them into a zip (Yjs state, a Markdown copy of every page,
 the images), encrypts it and hands the ciphertext to filex, which writes it
@@ -46,7 +46,7 @@ as a new version of the file.
 
 ### The keys
 
-The key hierarchy is **filex's own end-to-end encryption**, unchanged — the
+The key hierarchy is **filex's own end-to-end encryption**, unchanged - the
 same algorithms, parameters and recovery-key format as filex's encrypted
 folders:
 
@@ -60,8 +60,8 @@ every save: a fresh data key (DEK), wrapped by the FMK, and fresh nonces (AES-25
 - The password and the recovery key each unwrap the same FMK; neither is
   stored anywhere. The recovery key is 160 random bits, shown **once**, when
   it is made.
-- **A new password is a new key.** Changing the password — or setting a new
-  one after opening with the recovery key — makes a new FMK and a new
+- **A new password is a new key.** Changing the password - or setting a new
+  one after opening with the recovery key - makes a new FMK and a new
   recovery key and re-encrypts the workspace. From then on neither the old
   password nor the old recovery key opens the file, not even for someone
   who kept a copy of the old key block.
@@ -77,7 +77,7 @@ every save: a fresh data key (DEK), wrapped by the FMK, and fresh nonces (AES-25
 | the ciphertext | anything you did not export yourself |
 
 If you lose **both** the password and the recovery key, nobody can open the
-file — not filex, not an administrator, not the authors of this app.
+file - not filex, not an administrator, not the authors of this app.
 
 ### What it does not protect against
 
@@ -89,7 +89,7 @@ Be clear about these before trusting it with anything:
   build of this app, can serve an interface that sends your password away.
   What limits this: filex pins the interface package by its SHA-256 at
   install, serves only files from that package, and never updates an app by
-  itself — an administrator approves each version. The build is reproducible,
+  itself - an administrator approves each version. The build is reproducible,
   so you can check that the hash filex shows is the hash of this source
   ([Building](#building)).
 - **The sandbox is not a wall against a malicious app.** filex runs the
@@ -105,19 +105,19 @@ Be clear about these before trusting it with anything:
   file's older versions in filex.
 - **What you take out is plaintext.** A page you export, download or copy is
   outside the encryption by your choice; the export dialog says so.
-- **Your own device** — a keylogger, a compromised browser or extension —
+- **Your own device** - a keylogger, a compromised browser or extension -
   is out of scope, as it is for any end-to-end encryption.
 - **Metadata** (the file's name, size, times and version count) is visible
   to filex. Name the file accordingly.
 
 ## Installing it on filex
 
-It needs **filex 0.48.0 or later** — the version that runs app interfaces
+It needs **filex 0.48.0 or later** - the version that runs app interfaces
 (the manifest says `"filex": ">=0.48.0"`).
 
 1. **Admin → Plugins → Apps → Install an app → GitHub repository.**
 2. **Repository:** `BRF-Tech/filextext-app`. **Ref:** the tag of a release
-   (`v0.1.1`) — the repository's *Releases* page lists them. Give the tag,
+   (`v0.1.1`) - the repository's *Releases* page lists them. Give the tag,
    not a branch: the interface package is a release asset.
 3. filex fetches `filex-app.json` at that tag, downloads `ui.zip` from the
    release and refuses it unless its SHA-256 matches the manifest's. Read
@@ -128,7 +128,7 @@ The review lists:
 | Permission | Why |
 |---|---|
 | `files:read` | to open the `.fxtxt` file you open with it |
-| `files:write` | to save it — only that file |
+| `files:write` | to save it - only that file |
 | `ui` (has its own interface) | the editor runs in filex's sandboxed frame |
 | `ui-viewer:.fxtxt` | `.fxtxt` files open with filextext |
 | `ui-new:.fxtxt` | **New document → Encrypted workspace (.fxtxt)** |
@@ -156,12 +156,12 @@ an uploaded app has no source to check).
 - **Create.** In filex, **New → New document → Encrypted workspace (.fxtxt)**
   (an empty `.fxtxt` opened with the app does the same). Choose a password
   (at least 8 characters). The workspace is made, and its **recovery key**
-  is shown — once. Keep it somewhere other than the password, tick "I have
+  is shown - once. Keep it somewhere other than the password, tick "I have
   saved the recovery key" and continue. A new document is a filex draft until
   its first Save puts it in the folder.
 - **Open.** Open the file and type the password.
 - **Lost the password?** "Use the recovery key" opens the workspace with the
-  32-character key, then asks for a **new password** before anything else —
+  32-character key, then asks for a **new password** before anything else -
   and shows the **new** recovery key that comes with it.
 - **Change the password** from the ⋯ menu, proving it is you with the
   current password or the recovery key. You get a new recovery key; the old
@@ -172,7 +172,7 @@ an uploaded app has no source to check).
 <img src="docs/screenshots/unlock.png" alt="Opening an encrypted workspace" width="49%">
 </p>
 
-- **Pages and folders.** New page, new folder, rename, move, delete — from the
+- **Pages and folders.** New page, new folder, rename, move, delete - from the
   buttons, a row's ⋯ menu, right-click, or drag and drop.
 - **Markdown and text.** Import `.md` / `.txt` files (the button, or drop
   them on the sidebar); a leading `# Heading` becomes the page's title.
@@ -197,13 +197,13 @@ encrypted file (the body) in one file:
 "filextxt" | version (1 byte) | key block length (4 bytes, big-endian) | key block (JSON) | body
 ```
 
-The full specification — the key block, the body, the payload inside it,
-limits, what a reader must refuse, and test vectors — is
+The full specification - the key block, the body, the payload inside it,
+limits, what a reader must refuse, and test vectors - is
 [docs/FORMAT.md](docs/FORMAT.md). Three independent implementations agree
 on its vectors: this app (TypeScript), `tools/fxtxt_ref.py` (Python, which
 also generates them) and filex's own Go decryptor for encrypted folders.
 
-`tools/fxtxt_ref.py` opens a `.fxtxt` without a browser — your way out if
+`tools/fxtxt_ref.py` opens a `.fxtxt` without a browser - your way out if
 you ever need one:
 
 ```bash
@@ -219,7 +219,7 @@ unzip notes.zip 'pages/*'                                    # every page as Mar
 Two stages, because current BlockSuite is not published to npm: it lives as
 source inside the AFFiNE monorepo.
 
-**1. The editor library** — `vendor/blocksuite/`, committed, rebuilt rarely.
+**1. The editor library** - `vendor/blocksuite/`, committed, rebuilt rarely.
 On Linux (WSL works; keep the work directory on the Linux file system, not
 under `/mnt/<drive>`), with Node 22 and git:
 
@@ -233,7 +233,7 @@ then copy `~/fxtxt-bs/editor/dist/` over `vendor/blocksuite/`. The entry is
 `blocksuite/editor/src/index.ts`: a curated **page-mode** subset of AFFiNE's
 view extensions (no whiteboard, no database views, no embeds that fetch link
 previews), an in-memory workspace, the Markdown and text adapters, and two
-aliases that keep the bundle inside a strict content policy — shiki's
+aliases that keep the bundle inside a strict content policy - shiki's
 JavaScript regex engine instead of its WebAssembly one, and no inlined
 WebAssembly at all. The build also writes the editor's
 `THIRD_PARTY_LICENSES.txt`.
@@ -242,7 +242,7 @@ WebAssembly at all. The build also writes the editor's
 built from filex's `packages/app-ui`; `vite.config.ts` and `tsconfig.json`
 map the package name to it.
 
-**2. The app** — any OS, Node 22:
+**2. The app** - any OS, Node 22:
 
 ```bash
 npm ci
@@ -316,15 +316,20 @@ gzipped.
 ## Releasing
 
 1. Bump `version` in `filex-app.json` and `package.json`.
-2. `npm run build && node scripts/pack-ui.mjs --stamp` — builds `ui.zip` and
+2. Write the version's section in `CHANGELOG.md` (`## X.Y.Z - date`, then
+   what changed). It becomes the release's notes - what filex shows the
+   administrator under **Release notes** when it offers the update.
+3. `npm run build && node scripts/pack-ui.mjs --stamp` - builds `ui.zip` and
    writes its SHA-256 into `filex-app.json`.
-3. Commit, tag `vX.Y.Z`, push the tag.
+4. Commit, tag `vX.Y.Z`, push the tag.
 
 The **Release** workflow checks that the tag is the manifest's version and
 that `ui.bundle.url` points at this repository's releases, runs the unit
 tests, builds `ui.zip` again from the tag, refuses to publish unless its hash
 is the one committed in `filex-app.json`, and attaches `ui.zip`,
-`ui.zip.sha256` and `filex-app.json` to the GitHub release. **CI** runs the
+`ui.zip.sha256` and `filex-app.json` to the GitHub release, whose notes are
+the version's `CHANGELOG.md` section (`scripts/release-body.mjs`; a version
+with no section is not released). **CI** runs the
 types, the unit tests, the Python vectors and the build on every push and
 pull request, and keeps the built package for a week.
 
@@ -333,7 +338,7 @@ pull request, and keeps the built package for a week.
 [MIT](LICENSE).
 
 The bundled editor is BlockSuite (MIT, © TOEVERYTHING PTE. LTD.) with its
-dependencies — MIT, Apache-2.0, BSD-2/3-Clause, 0BSD, CC0, Zlib, DOMPurify
+dependencies - MIT, Apache-2.0, BSD-2/3-Clause, 0BSD, CC0, Zlib, DOMPurify
 under MPL-2.0 OR Apache-2.0, and `@toeverything/theme` under MPL-2.0
 (unmodified; its source is on npm). Every package with code in the
 interface, with its licence text, is listed in

@@ -59,7 +59,7 @@ the payload, AES-256-GCM-encrypted by the DEK
 - **KEK**: `PBKDF2(HMAC-SHA256, password as UTF-8, salt, iterations, 32 bytes)`.
   New key blocks use **600,000** iterations.
 - **RKEK**: `HKDF-SHA256(ikm = the recovery key's 20 bytes, salt, info =
-  "filex-e2e-recovery-v1", 32 bytes)` — filex's info string, unchanged.
+  "filex-e2e-recovery-v1", 32 bytes)` - filex's info string, unchanged.
 - **DEK**: 32 random bytes, new on **every save**, with new IVs.
 - Every AES-GCM operation uses a 12-byte random IV and a 16-byte tag, no
   associated data.
@@ -123,7 +123,7 @@ first. Reading it back ignores case, spaces and dashes and maps the
 look-alikes `O`→`0`, `I`/`L`→`1`. It is filex's recovery key format exactly.
 
 The key is shown once, when the workspace is created, and is not stored
-anywhere — not in the file, not in the browser, not by filex.
+anywhere - not in the file, not in the browser, not by filex.
 
 ## Opening, saving, changing the password
 
@@ -143,13 +143,13 @@ anywhere — not in the file, not in the browser, not by filex.
 - <a id="changing-the-password"></a>**Change the password = re-key.** At any
   time, with the current password **or** the recovery key as proof (checked
   against the current key block, then forgotten), the writer makes a **whole
-  new key block** exactly as for a new workspace — a new FMK, a new password
-  slot, a **new recovery key** — decrypts the payload with the old FMK,
+  new key block** exactly as for a new workspace - a new FMK, a new password
+  slot, a **new recovery key** - decrypts the payload with the old FMK,
   encrypts it under the new one (a new DEK and new IVs, as on every save),
   **saves**, and only then shows the new recovery key, once.
 
   So nothing old opens what is saved from the change on: not the old
-  password, not the old recovery key, not the old FMK — including for someone
+  password, not the old recovery key, not the old FMK - including for someone
   who knew them and holds an earlier version of the file (filex keeps
   versions). What cannot change is arithmetic: a copy saved **before** the
   change still opens with the password and key it was saved with.
@@ -169,8 +169,8 @@ workspace opens with any unzip tool:
 |---|---|
 | `fxtxt.json` | The manifest ([below](#manifest)) |
 | `ydoc/root.bin` | Yjs update of the workspace root: BlockSuite's page list (`meta.pages`) and the folder tree (map `fxtxt:folders`) |
-| `ydoc/<n>.bin` | Yjs update of one page (BlockSuite `affine:page` → `affine:note` → blocks) — **authoritative** |
-| `pages/<folder>/…/<title>.md` | The same page as Markdown — for people and tools; the app never reads it |
+| `ydoc/<n>.bin` | Yjs update of one page (BlockSuite `affine:page` → `affine:note` → blocks) - **authoritative** |
+| `pages/<folder>/…/<title>.md` | The same page as Markdown - for people and tools; the app never reads it |
 | `blobs/<n>` | An image, raw bytes |
 
 ### Manifest
@@ -222,7 +222,7 @@ workspace opens with any unzip tool:
 - **When.** filex sees when the file is saved and by whom.
 - **The browser.** Keys and plaintext live in the memory of the open tab, in
   a sandboxed frame; code that runs in that frame can read them. filex serves
-  that code — the usual limit of web end-to-end encryption.
+  that code - the usual limit of web end-to-end encryption.
 - **Old versions and old passwords.** See [changing the password](#changing-the-password).
 - **A lost password and a lost recovery key.** Nobody can open the file.
 
@@ -308,7 +308,7 @@ password `yeni parola — ŞİFRE 2026`. Draws, in the same order as a new works
 | file SHA-256 | `1b9f7bbaf69f0d7127fff6525de1ea84568a92f81510f7af7797c7ee9e32b553` |
 
 The re-keyed file opens with the new password and the new recovery key, and
-**not** with the old password, the old recovery key or the old FMK — checked
+**not** with the old password, the old recovery key or the old FMK - checked
 in all three implementations.
 
 Key block:

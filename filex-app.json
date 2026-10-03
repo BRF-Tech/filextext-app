@@ -49,7 +49,7 @@
   "ui": {
     "bundle": {
       "url": "https://github.com/BRF-Tech/filextext-app/releases/download/{tag}/ui.zip",
-      "sha256": "21cafc370dec1e97340819b454324cda6fd3ba476292c22a8448f7c06934ddef"
+      "sha256": "87057f7b82f30842ed6cba7dd70e3c344eb30c56feaa4c87c235d9efe2265626"
     },
     "download": true
   },
