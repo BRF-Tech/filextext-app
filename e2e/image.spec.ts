@@ -10,7 +10,7 @@ const PNG = Buffer.from(
   'base64',
 );
 
-test('an image goes into the encrypted file and comes back', async ({ page }) => {
+test('an image goes into the encrypted file and comes back', async ({ page, browserName }) => {
   const app = await openHost(page, 'lang=en');
   await createWorkspace(app, 'resimli parola');
   await writePage(page, app, 'Resimler', 'aşağıda bir resim var');
@@ -19,6 +19,22 @@ test('an image goes into the encrypted file and comes back', async ({ page }) =>
   await page.keyboard.press('Enter');
   await page.keyboard.type('/image');
   await expect(app.getByRole('button', { name: /^Image/ })).toBeVisible();
+  if (browserName === 'firefox') {
+    // Playwright's Firefox (1.65) fires `cancel` on the file input as soon as
+    // it takes the picker over, before setFiles. BlockSuite's picker input
+    // removes itself on `cancel`, so the files would land on a detached
+    // input. A person's pick fires only `change`: hold that `cancel` back.
+    const frame = await (await page.locator('iframe[title="app"]').elementHandle())!.contentFrame();
+    await frame!.evaluate(() => {
+      document.addEventListener(
+        'cancel',
+        (e) => {
+          if (e.target instanceof HTMLInputElement && e.target.type === 'file') e.stopImmediatePropagation();
+        },
+        true,
+      );
+    });
+  }
   const chooser = page.waitForEvent('filechooser', { timeout: 15_000 });
   await page.keyboard.press('Enter');
   await (await chooser).setFiles({ name: 'kırmızı.png', mimeType: 'image/png', buffer: PNG });

@@ -19,7 +19,6 @@
       "vite/client",
       "node"
     ],
-    "baseUrl": ".",
     "paths": {
       "@brftech/filex-app-ui": [
         "./vendor/filex-app-ui/filex-app-ui"

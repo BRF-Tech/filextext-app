@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.1.2 - 2026-11-08
 
+- The interface is built with Vite 8.3.6 (was 7.3.6) and carries the filex interface SDK of filex 0.59.0 (`@brftech/filex-app-ui`, was 0.48.1). Nothing the app does changes, and it still needs only filex 0.48.0 or later: the SDK only adds methods this app does not call. `ui.zip` is 1.50 MiB (was 1.55 MiB). The BlockSuite editor is unchanged (AFFiNE v0.27.4, still its latest stable release).
+- Development tools: TypeScript 7.0.2 (`tsconfig.json` no longer sets `baseUrl`, which TypeScript 7 removed), Vitest 5.1.0, Playwright 1.65.0, `@types/node` 22.20.5. `npm audit` reports nothing (Vite 7.3.6's development server and Vitest 5.0.2 had advisories; neither is in `ui.zip`).
+- The workflows pin every action by commit SHA, with its version beside it: `actions/checkout` v7.0.1, `actions/setup-node` v7.1.0, `actions/upload-artifact` v7.0.2, `softprops/action-gh-release` v3.0.4.
 - A release's notes on GitHub are its `CHANGELOG.md` section, so filex's "Review update" says what the version changes (it showed only GitHub's "Full Changelog" line). A version with no section is not released.
 
 ## 0.1.1 - 2026-09-28

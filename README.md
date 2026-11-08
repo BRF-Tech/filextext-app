@@ -117,7 +117,7 @@ It needs **filex 0.48.0 or later** - the version that runs app interfaces
 
 1. **Admin → Plugins → Apps → Install an app → GitHub repository.**
 2. **Repository:** `BRF-Tech/filextext-app`. **Ref:** the tag of a release
-   (`v0.1.1`) - the repository's *Releases* page lists them. Give the tag,
+   (`v0.1.2`) - the repository's *Releases* page lists them. Give the tag,
    not a branch: the interface package is a release asset.
 3. filex fetches `filex-app.json` at that tag, downloads `ui.zip` from the
    release and refuses it unless its SHA-256 matches the manifest's. Read
@@ -239,8 +239,9 @@ WebAssembly at all. The build also writes the editor's
 `THIRD_PARTY_LICENSES.txt`.
 
 `vendor/filex-app-ui/` is the bridge SDK (`@brftech/filex-app-ui`, MIT),
-built from filex's `packages/app-ui`; `vite.config.ts` and `tsconfig.json`
-map the package name to it.
+built from filex's `packages/app-ui`: `dist/filex-app-ui.js` and
+`dist/index.d.ts` of the npm package at 0.59.0, as published;
+`vite.config.ts` and `tsconfig.json` map the package name to it.
 
 **2. The app** - any OS, Node 22:
 
@@ -255,7 +256,7 @@ byte, on any OS (checked on Linux and Windows). To check an installed
 version, build its tag and compare:
 
 ```bash
-git checkout v0.1.1 && npm ci && npm run build
+git checkout v0.1.2 && npm ci && npm run build
 cat release/ui.zip.sha256          # = ui.bundle.sha256 in filex-app.json = the hash filex's review shows
 ```
 
@@ -300,17 +301,17 @@ anywhere (a sandboxed frame without `allow-forms` blocks a submission before
 its `submit` event fires), and the frame has no storage, so BlockSuite's own
 small preferences go to an in-memory `localStorage` stand-in.
 
-Measured on 2026-09-27 (localhost, the stand-in host; Chrome 153, Firefox
-150, WebKit 26.4):
+Measured on 2026-11-08 (localhost, the stand-in host; Chrome 156, Firefox
+159, WebKit 27.2; the PBKDF2 row on 2026-09-27):
 
 | | Chrome | Firefox | WebKit |
 |---|---|---|---|
-| First screen | 165 ms | 274 ms | 571 ms |
-| Unlock + open, 41 pages | 529 ms | 1225 ms | 1574 ms |
-| Save, 41 pages (first / next) | 134 / 36 ms | 191 / 57 ms | 485 / 127 ms |
+| First screen | 173 ms | 280 ms | 691 ms |
+| Unlock + open, 41 pages | 503 ms | 670 ms | 1454 ms |
+| Save, 41 pages (first / next) | 167 / 38 ms | 205 / 52 ms | 290 / 73 ms |
 | PBKDF2-SHA256, 600,000 iterations | ~130 ms | ~130 ms | ~540 ms |
 
-`ui.zip` is 1.5 MiB (5.9 MiB unpacked); the editor chunk is 4.3 MB, 1.15 MB
+`ui.zip` is 1.5 MiB (5.8 MiB unpacked); the editor chunk is 4.3 MB, 1.13 MB
 gzipped.
 
 ## Releasing

@@ -1,4 +1,4 @@
-const k = 1, S = "filex:hello", E = "filex:port", L = [
+const j = 1, S = "filex:hello", M = "filex:port", E = [
   "session.get",
   "file.read",
   "file.save",
@@ -13,7 +13,17 @@ const k = 1, S = "filex:hello", E = "filex:port", L = [
   "engine.call",
   "job.submit",
   "state.get",
-  "state.set"
+  "state.set",
+  "license.get",
+  "ui.print",
+  "coedit.join",
+  "coedit.subscribe",
+  "coedit.append",
+  "coedit.lease",
+  "coedit.cursor",
+  "coedit.blob.put",
+  "coedit.blob.get",
+  "coedit.leave"
 ], x = {
   /** `file.read({as: 'text'})` refuses a file larger than this; read a stream. */
   maxTextBytes: 33554432,
@@ -24,50 +34,64 @@ const k = 1, S = "filex:hello", E = "filex:port", L = [
   /** How long the SDK waits for the host's port. */
   connectTimeoutMs: 1e4,
   /** The largest file `ui.download` hands the person (streamed or not). */
-  maxDownloadBytes: 268435456
+  maxDownloadBytes: 268435456,
+  /**
+   * The largest PDF `ui.print` prints (filex 0.55). Lower than a download:
+   * a download can stream to disk, a print is held whole in the page (one
+   * Blob) until the print dialog has read it, and a document worth printing
+   * is far smaller.
+   */
+  maxPrintBytes: 67108864,
+  /**
+   * The largest file of an encrypted folder filex hands an app in the clear
+   * or takes back from it (filex 0.56, `FileInfo.plaintext`): it is
+   * decrypted and encrypted whole in the page, as filex's own explorer does
+   * for a file of this size.
+   */
+  maxEncryptedBytes: 209715200
 };
-function I(n) {
+function k(n) {
   return !!n && typeof n == "object" && n.type === S && typeof n.v == "number";
 }
-function B(n) {
-  return !!n && typeof n == "object" && n.type === E;
+function L(n) {
+  return !!n && typeof n == "object" && n.type === M;
 }
-function j(n) {
+function A(n) {
   return !!n && typeof n == "object" && typeof n.id == "number" && typeof n.method == "string";
 }
-function q(n) {
-  return L.includes(n);
+function I(n) {
+  return E.includes(n);
 }
-class p extends Error {
-  constructor(c) {
-    super(c.message || c.code), this.name = "FilexError", this.code = c.code;
+class m extends Error {
+  constructor(u) {
+    super(u.message || u.code), this.name = "FilexError", this.code = u.code;
   }
 }
-let b = null;
-function A(n = {}) {
-  return b || (b = O(n)), b;
+let h = null;
+function P(n = {}) {
+  return h || (h = O(n)), h;
 }
 function O(n) {
-  return new Promise((c, d) => {
+  return new Promise((u, p) => {
     if (typeof window > "u" || window.parent === window) {
-      d(new p({ code: "unavailable", message: "not running inside filex" }));
+      p(new m({ code: "unavailable", message: "not running inside filex" }));
       return;
     }
-    const i = window.parent, u = R(), a = setTimeout(() => {
-      window.removeEventListener("message", g), d(new p({ code: "unavailable", message: "filex did not answer" }));
+    const o = window.parent, l = R(), a = setTimeout(() => {
+      window.removeEventListener("message", g), p(new m({ code: "unavailable", message: "filex did not answer" }));
     }, n.timeoutMs ?? x.connectTimeoutMs);
     function g(y) {
-      if (y.source !== i || !B(y.data) || !y.ports[0] || u && y.origin !== u) return;
+      if (y.source !== o || !L(y.data) || !y.ports[0] || l && y.origin !== l) return;
       window.removeEventListener("message", g), clearTimeout(a);
-      const o = y.ports[0], f = T(o, n);
-      f.request("session.get").then((m) => {
-        f.session = m, n.applyTheme !== !1 && (v(m.theme, m.locale, m.dir), f.on("theme", (l) => v(l)), f.on("locale", (l) => {
-          const e = l;
+      const r = y.ports[0], c = T(r, n);
+      c.request("session.get").then((f) => {
+        c.session = f, n.applyTheme !== !1 && (v(f.theme, f.locale, f.dir), c.on("theme", (d) => v(d)), c.on("locale", (d) => {
+          const e = d;
           v(void 0, e.locale, e.dir);
-        })), c(f);
-      }).catch(d);
+        })), u(c);
+      }).catch(p);
     }
-    window.addEventListener("message", g), i.postMessage({ type: S, v: 1 }, "*");
+    window.addEventListener("message", g), o.postMessage({ type: S, v: 1 }, "*");
   });
 }
 function R() {
@@ -78,17 +102,17 @@ function R() {
   }
   return "";
 }
-function T(n, c) {
-  let d = 0;
-  const i = /* @__PURE__ */ new Map(), u = /* @__PURE__ */ new Map();
+function T(n, u) {
+  let p = 0;
+  const o = /* @__PURE__ */ new Map(), l = /* @__PURE__ */ new Map();
   let a = null;
   n.onmessage = (e) => {
     const t = e.data;
     if (!(!t || typeof t != "object")) {
       if (typeof t.id == "number") {
-        const s = i.get(t.id);
+        const s = o.get(t.id);
         if (!s) return;
-        i.delete(t.id), t.error ? s.reject(new p(t.error)) : s.resolve(t.result);
+        o.delete(t.id), t.error ? s.reject(new m(t.error)) : s.resolve(t.result);
         return;
       }
       if (typeof t.hid == "number") {
@@ -96,11 +120,11 @@ function T(n, c) {
         return;
       }
       if (typeof t.event == "string")
-        for (const s of u.get(t.event) ?? [])
+        for (const s of l.get(t.event) ?? [])
           try {
             s(t.data);
-          } catch (r) {
-            console.error("[filex-app-ui] listener failed", r);
+          } catch (i) {
+            console.error("[filex-app-ui] listener failed", i);
           }
     }
   };
@@ -114,7 +138,7 @@ function T(n, c) {
         const t = await y();
         n.postMessage({ hid: e.hid, result: t ?? { saved: !0 } });
       } catch (t) {
-        const s = t instanceof p ? { code: t.code, message: t.message } : { code: "failed", message: String(t?.message ?? t) };
+        const s = t instanceof m ? { code: t.code, message: t.message } : { code: "failed", message: String(t?.message ?? t) };
         n.postMessage({ hid: e.hid, error: s });
       }
       return;
@@ -124,23 +148,23 @@ function T(n, c) {
   async function y() {
     if (!a) return null;
     const e = await a();
-    return e == null ? null : l.save(e);
+    return e == null ? null : d.save(e);
   }
-  function o(e, t, s = []) {
-    const r = ++d;
-    return new Promise((w, h) => {
-      i.set(r, { resolve: w, reject: h });
+  function r(e, t, s = []) {
+    const i = ++p;
+    return new Promise((b, w) => {
+      o.set(i, { resolve: b, reject: w });
       try {
-        n.postMessage({ id: r, method: e, params: t }, s);
-      } catch (M) {
-        i.delete(r), h(M);
+        n.postMessage({ id: i, method: e, params: t }, s);
+      } catch (B) {
+        o.delete(i), w(B);
       }
     });
   }
-  function f(e, t) {
-    o(e, t).catch((s) => console.warn("[filex-app-ui]", e, s));
+  function c(e, t) {
+    r(e, t).catch((s) => console.warn("[filex-app-ui]", e, s));
   }
-  async function m(e) {
+  async function f(e) {
     if (typeof e == "string") return { data: e, transfer: [] };
     if (e instanceof ArrayBuffer) return { data: e, transfer: [e] };
     if (ArrayBuffer.isView(e)) {
@@ -153,106 +177,144 @@ function T(n, c) {
     }
     if (typeof ReadableStream < "u" && e instanceof ReadableStream)
       return { data: e, transfer: [e] };
-    throw new p({ code: "invalid", message: "save takes a string, a Blob, bytes or a ReadableStream" });
+    throw new m({ code: "invalid", message: "save takes a string, a Blob, bytes or a ReadableStream" });
   }
-  const l = {
+  const d = {
     session: void 0,
     async open(e = 0) {
-      const t = l.session?.files?.[e];
-      if (!t) throw new p({ code: "not_found", message: `no file at ${e}` });
-      const s = (r, w) => o("file.read", { index: e, as: r }).then((h) => h[w]);
+      const t = d.session?.files?.[e];
+      if (!t) throw new m({ code: "not_found", message: `no file at ${e}` });
+      const s = (i, b) => r("file.read", { index: e, as: i }).then((w) => w[b]);
       return {
         ...t,
         text: () => s("text", "text"),
         bytes: () => s("bytes", "bytes"),
         stream: () => s("stream", "stream"),
-        save: (r, w) => l.save(r, { index: e, mime: w })
+        read: (i = "bytes") => r("file.read", { index: e, as: i }),
+        save: (i, b) => d.save(i, { index: e, mime: b })
       };
     },
     async save(e, t = {}) {
-      const s = await m(e);
-      return o("file.save", { index: t.index ?? 0, data: s.data, mime: t.mime }, s.transfer);
+      const s = await f(e), i = { index: t.index ?? 0, data: s.data, mime: t.mime };
+      return typeof t.through == "number" && (i.through = t.through), t.csv && (i.csv = { ...t.csv }), t.beside && (i.beside = t.beside), t.conflict && (i.conflict = t.conflict), r("file.save", i, s.transfer);
     },
     async saveAs(e, t, s) {
-      const r = await m(t);
-      return o("file.saveAs", { name: e, data: r.data, mime: s }, r.transfer);
+      const i = await f(t);
+      return r("file.saveAs", { name: e, data: i.data, mime: s }, i.transfer);
     },
     async download(e, t, s) {
-      const r = await m(t);
-      return o("ui.download", { name: e, data: r.data, mime: s }, r.transfer);
+      const i = await f(t);
+      return r("ui.download", { name: e, data: i.data, mime: s }, i.transfer);
+    },
+    async print(e, t) {
+      const s = await f(t);
+      return r("ui.print", { name: e, data: s.data, mime: "application/pdf" }, s.transfer);
+    },
+    coedit: {
+      join(e = 0) {
+        return r("coedit.join", { index: e });
+      },
+      subscribe(e) {
+        return r("coedit.subscribe", { from: e });
+      },
+      append(e, t) {
+        return r("coedit.append", { kind: e, body: t });
+      },
+      async lease(e, t) {
+        return !!(await r("coedit.lease", { op: e, changesSeen: t }))?.granted;
+      },
+      cursor(e) {
+        c("coedit.cursor", { cursor: e });
+      },
+      async putBlob(e, t) {
+        const s = await f(t);
+        if (!(s.data instanceof ArrayBuffer)) throw new m({ code: "invalid", message: "a blob is bytes" });
+        await r("coedit.blob.put", { name: e, data: s.data }, s.transfer);
+      },
+      async getBlob(e) {
+        return (await r("coedit.blob.get", { name: e })).bytes;
+      },
+      async leave() {
+        await r("coedit.leave");
+      }
     },
     dirty(e) {
-      f("ui.dirty", { dirty: !!e });
+      c("ui.dirty", { dirty: !!e });
     },
     title(e) {
-      f("ui.title", { text: String(e).slice(0, x.maxLineChars) });
+      c("ui.title", { text: String(e).slice(0, x.maxLineChars) });
     },
     toast(e, t) {
-      f("ui.toast", { text: String(e).slice(0, x.maxLineChars), tone: t });
+      c("ui.toast", { text: String(e).slice(0, x.maxLineChars), tone: t });
     },
     confirm(e) {
-      return o("ui.confirm", typeof e == "string" ? { text: e } : e);
+      return r("ui.confirm", typeof e == "string" ? { text: e } : e);
     },
     close() {
-      f("ui.close");
+      c("ui.close");
     },
     copy(e) {
-      return o("clipboard.write", { text: String(e) });
+      return r("clipboard.write", { text: String(e) });
     },
     call(e, t) {
-      return o("engine.call", { method: e, params: t });
+      return r("engine.call", { method: e, params: t });
     },
     submit(e, t) {
-      return o("job.submit", { action: e, params: t });
+      return r("job.submit", { action: e, params: t });
     },
     state: {
       get(e) {
-        return o("state.get", { key: e });
+        return r("state.get", { key: e });
       },
       set(e, t) {
-        return o("state.set", { key: e, value: t });
+        return r("state.set", { key: e, value: t });
+      }
+    },
+    license: {
+      get() {
+        return r("license.get");
       }
     },
     on(e, t) {
-      let s = u.get(e);
-      return s || u.set(e, s = /* @__PURE__ */ new Set()), s.add(t), () => s.delete(t);
+      let s = l.get(e);
+      return s || l.set(e, s = /* @__PURE__ */ new Set()), s.add(t), () => s.delete(t);
     },
     onSave(e) {
       return a = e, () => {
         a === e && (a = null);
       };
     },
-    request: o
+    request: r
   };
-  return c.saveShortcut !== !1 && typeof document < "u" && document.addEventListener(
+  return u.saveShortcut !== !1 && typeof document < "u" && document.addEventListener(
     "keydown",
     (e) => {
-      (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === "s" || e.key === "S") && a && (e.preventDefault(), y().catch((t) => l.toast(String(t?.message ?? t), "error")));
+      (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === "s" || e.key === "S") && a && (e.preventDefault(), y().catch((t) => d.toast(String(t?.message ?? t), "error")));
     },
     !0
-  ), l;
+  ), d;
 }
-function v(n, c, d) {
+function v(n, u, p) {
   if (typeof document > "u") return;
-  const i = document.documentElement;
+  const o = document.documentElement;
   if (n) {
-    i.dataset.theme = n.mode, i.style.colorScheme = n.mode;
-    for (const [u, a] of Object.entries(n.tokens ?? {}))
-      /^--fe-[a-z0-9-]+$/.test(u) && typeof a == "string" && i.style.setProperty(u, a);
+    o.dataset.theme = n.mode, o.style.colorScheme = n.mode;
+    for (const [l, a] of Object.entries(n.tokens ?? {}))
+      /^--fe-[a-z0-9-]+$/.test(l) && typeof a == "string" && o.style.setProperty(l, a);
   }
-  c && (i.lang = c), d && (i.dir = d);
+  u && (o.lang = u), p && (o.dir = p);
 }
 export {
-  k as BRIDGE_VERSION,
-  p as FilexError,
+  j as BRIDGE_VERSION,
+  m as FilexError,
   S as HELLO,
   x as LIMITS,
-  L as METHODS,
-  E as PORT,
-  A as connect,
-  I as isHello,
-  q as isKnownMethod,
-  B as isPortMessage,
-  j as isRequest
+  E as METHODS,
+  M as PORT,
+  P as connect,
+  k as isHello,
+  I as isKnownMethod,
+  L as isPortMessage,
+  A as isRequest
 };
 //# sourceMappingURL=filex-app-ui.js.map

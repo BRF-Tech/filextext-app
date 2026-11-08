@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
   "name": "filextext",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "label": {
     "en": "filextext",
     "tr": "filextext"
@@ -49,7 +49,7 @@
   "ui": {
     "bundle": {
       "url": "https://github.com/BRF-Tech/filextext-app/releases/download/{tag}/ui.zip",
-      "sha256": "87057f7b82f30842ed6cba7dd70e3c344eb30c56feaa4c87c235d9efe2265626"
+      "sha256": "c4c70e671cd90b9c23bce0ce93175ec187565522ef68bdf4255ef5075b6b0c52"
     },
     "download": true
   },
