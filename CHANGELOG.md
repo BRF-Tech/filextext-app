@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- vite 8.3.7 (was 8.3.6).
+
 ## 0.1.2 - 2026-11-08
 
 - The interface is built with Vite 8.3.6 (was 7.3.6) and carries the filex interface SDK of filex 0.59.0 (`@brftech/filex-app-ui`, was 0.48.1). Nothing the app does changes, and it still needs only filex 0.48.0 or later: the SDK only adds methods this app does not call. `ui.zip` is 1.50 MiB (was 1.55 MiB). The BlockSuite editor is unchanged (AFFiNE v0.27.4, still its latest stable release).
