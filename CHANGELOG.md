@@ -5,6 +5,7 @@
 - vite 8.3.7 (was 8.3.6).
 - vite 8.3.8 (was 8.3.7).
 - @playwright/test 1.65.1 (was 1.65.0).
+- @types/node 22.20.7 (was 22.20.5).
 
 ## 0.1.2 - 2026-11-08
 
