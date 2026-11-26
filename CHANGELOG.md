@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.3 - 2026-11-26
 
 - vite 8.3.7 (was 8.3.6).
 - vite 8.3.8 (was 8.3.7).
