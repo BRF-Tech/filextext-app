@@ -61,6 +61,40 @@ function decryptWithReference(bytes, secret) {
   return unzipSync(new Uint8Array(fs.readFileSync(path.join(dir, 'w.zip'))));
 }
 
+/**
+ * Click `target` in the app's frame once the pointer demonstrably reaches it.
+ *
+ * Chromium runs the frame in its own process (a sandboxed frame is a
+ * cross-origin one) and decides which process a mouse event goes to from the
+ * page's hit-test data. Right after filex opens the frame (the viewer fades
+ * in for 150 ms), that data can still send the event to filex's page: the
+ * press lands on filex's <iframe> element, the app never hears it, and the
+ * unlock screen waits with the password typed in. Measured on filex 0.48.1
+ * (the manifest's floor) with Chrome 157: 2 of 9 nightly runs, and 2 of 20
+ * runs of the nightly's own sequence, where filex's page logged the
+ * pointerdown on the frame element and the frame logged none; a second click
+ * a minute later went in. Firefox and WebKit never lost one, and neither did
+ * filex 0.61.3.
+ *
+ * So the click waits for the one condition it needs: the frame itself sees
+ * the pointer over the element (`:hover` inside the frame). Until then the
+ * pointer goes off the frame and back, so the next move is routed afresh.
+ * Answers how many tries it took (1 = the pointer was in at once).
+ */
+async function clickInFrame(page, target, label) {
+  const deadline = Date.now() + 15000;
+  for (let tries = 1; ; tries++) {
+    await target.hover();
+    if (await target.evaluate((el) => el.matches(':hover'))) {
+      await target.click();
+      return tries;
+    }
+    if (Date.now() > deadline) throw new Error(`${label}: the pointer does not reach the app's frame (${tries} tries)`);
+    await page.mouse.move(1, 1);
+    await page.waitForTimeout(100);
+  }
+}
+
 async function main() {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'filextext-real-'));
   const store = path.join(data, 'depo');
@@ -173,7 +207,7 @@ async function run(name, store) {
     // 2. Password + recovery key
     await app.getByTestId('new-password').fill(PW);
     await app.getByTestId('new-password-2').fill(PW);
-    await app.getByTestId('create-submit').click();
+    R.pointerTries = { create: await clickInFrame(page, app.getByTestId('create-submit'), 'create-submit') };
     await app.getByTestId('recovery-screen').waitFor({ timeout: 60000 });
     const key = ((await app.getByTestId('recovery-key').textContent()) ?? '').trim();
     R.keyFormat = /^([0-9A-HJKMNP-TV-Z]{4}-){7}[0-9A-HJKMNP-TV-Z]{4}$/.test(key);
@@ -250,7 +284,7 @@ async function run(name, store) {
     await app.getByTestId('unlock-screen').waitFor({ timeout: 60000 });
     await app.getByTestId('unlock-password').fill(PW);
     const u0 = Date.now();
-    await app.getByTestId('unlock-submit').click();
+    R.pointerTries.unlock = await clickInFrame(page, app.getByTestId('unlock-submit'), 'unlock-submit');
     await app.locator('affine-paragraph').filter({ hasText: SECRET }).first().waitFor({ timeout: 60000 });
     R.unlockMs = Date.now() - u0;
     await shot(page, '7-reopened');
